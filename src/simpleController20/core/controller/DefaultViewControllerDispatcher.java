@@ -7,9 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import simpleController20.api.controller.ViewController;
 import simpleController20.api.controller.ViewControllerDispatcher;
 import simpleController20.api.view.ViewContainer;
+import simpleController20.core.core.AbstractApplication;
 
 
 
@@ -32,7 +36,7 @@ import simpleController20.api.view.ViewContainer;
  */
 //https://github.com/mariogarcia/viewa/blob/c39f7f46dc39908bd23cd4ded0b60c5f555617b8/core/src/main/java/org/viewaframework/controller/DefaultViewControllerDispatcher.java#L26
 public class DefaultViewControllerDispatcher implements ViewControllerDispatcher {
-	
+	private static final Logger logger = LoggerFactory.getLogger(DefaultViewControllerDispatcher.class);
 	private Map<String,ViewController<? extends EventListener,? extends EventObject>> controllers;
 
 	/**
@@ -65,10 +69,15 @@ public class DefaultViewControllerDispatcher implements ViewControllerDispatcher
 	 */	
 	public Map<String,List<ViewController<? extends EventListener,? extends EventObject>>> getViewControllers(ViewContainer view) {
 		String viewId = view.getId();
+		if(viewId.equals("TableViewId2")) {
+			logger.info("TableViewId2_controllers");
+			logger.info("this.getControllers().keySet():"+this.getControllers().keySet());
+		}
 		Map<String,List<ViewController<? extends EventListener,? extends EventObject>>> 	componentControllerList = new HashMap<String,List<ViewController<? extends EventListener,? extends EventObject>>>();		
 	 /* Looping through all controllers */
 		for (String st : this.getControllers().keySet()){
 		 /* If the next controller belongs to the view... */
+			logger.info("st:"+st);
 			if (st!=null && st.startsWith(viewId)){
 			 /* Then we get the controller list for this component and then add this controller */
 				List<ViewController<? extends EventListener,? extends EventObject>> componentListeners = componentControllerList.get(st);

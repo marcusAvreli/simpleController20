@@ -23,7 +23,7 @@ import simpleController20.core.view.DefaultViewContainerFrame;
  *
  */
 //https://github.com/mariogarcia/viewa/blob/c39f7f46dc39908bd23cd4ded0b60c5f555617b8/api/src/main/java/org/viewaframework/core/Application.java
-public interface Application extends ViewControllerDispatcherAware,ApplicationContextAware {
+public interface Application extends ApplicationListenerAware,ViewControllerDispatcherAware,ApplicationContextAware {
 
 /**
  * 

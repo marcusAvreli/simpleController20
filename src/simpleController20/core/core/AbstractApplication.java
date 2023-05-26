@@ -2,6 +2,7 @@ package simpleController20.core.core;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -14,6 +15,8 @@ import simpleController20.api.controller.ViewControllerDispatcher;
 import simpleController20.api.core.Application;
 import simpleController20.api.core.ApplicationContext;
 import simpleController20.api.core.ApplicationContextException;
+import simpleController20.api.core.ApplicationEvent;
+import simpleController20.api.core.ApplicationListener;
 import simpleController20.api.view.ViewContainer;
 import simpleController20.api.view.ViewContainerFrame;
 import simpleController20.api.view.ViewException;
@@ -23,11 +26,12 @@ import simpleController20.api.view.perspective.PerspectiveConstraint;
 import simpleController20.core.annotation.processor.ViewsProcessorWrapper;
 import simpleController20.core.controller.DefaultViewControllerDispatcher;
 import simpleController20.core.view.DefaultViewManager;
+import simpleController20.core.view.event.DefaultViewContainerEventController;
 import simpleController20.core.view.perspective.DefaultPerspective;
 import simpleController20.core.view.perspective.MyPerspective;
 import simpleController20.widget.swing.builder.util.SwingBuilderView;
-import simpleController20.widget.swing.builder.util.TabView;
-import simpleController20.widget.swing.builder.util.TableView;
+import simpleController20.widget.swing.builder.util.CertificationView;
+import simpleController20.widget.swing.builder.util.CustomApplicationView;
 
 
 /**
@@ -56,7 +60,7 @@ public abstract class AbstractApplication implements Application
 {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractApplication.class);
 	private ApplicationContext			applicationContext;
-	
+	private List<ApplicationListener>	applicationListeners;
 	private Locale						locale;
 	private ViewControllerDispatcher 	dispatcher;
 	private String 						name;
@@ -68,15 +72,18 @@ public abstract class AbstractApplication implements Application
 		//this.viewManager 			= new DefaultViewManager(this,new DefaultPerspective());
 		this.viewManager 			= new DefaultViewManager(this,new MyPerspective());
 		this.dispatcher 			= new DefaultViewControllerDispatcher();
+		this.applicationListeners 	= new ArrayList<ApplicationListener>();
+		
 		ViewContainer vc = new SwingBuilderView(); 
 		
-		ViewContainer tableContainer = new TableView();
-		ViewContainer tabContainer = new TabView(); 
+		ViewContainer tableContainer = new CustomApplicationView();
+	
 		//public ViewsProcessorWrapper(ViewContainer view,PerspectiveConstraint constraint,boolean rootView,boolean trayView){
 		ViewsProcessorWrapper wrapper = new ViewsProcessorWrapper(vc, PerspectiveConstraint.LEFT, false, false);
 		initViews = new ArrayList<ViewsProcessorWrapper>();
 		initViews.add(wrapper);
 		wrapper = new ViewsProcessorWrapper(tableContainer, PerspectiveConstraint.RIGHT, false, false);
+		//tableContainer.addViewContainerListener(new DefaultViewContainerEventController());
 		initViews.add(wrapper);
 	//	wrapper = new ViewsProcessorWrapper(tabContainer, PerspectiveConstraint.RIGHT, false, false);
 		//initViews.add(wrapper);
@@ -109,12 +116,35 @@ public abstract class AbstractApplication implements Application
 	public void close() {
 		
 		logger.info("Application_closing!");
-		this.fireClose();
+		this.fireClose(new ApplicationEvent());
 	}
-	public void fireClose() {
+	public void fireClose(ApplicationEvent event) {
 		
 		
+		 /* First we execute all related listeners */
+		for (ApplicationListener applicationListener : this.applicationListeners){
+			applicationListener.onClose(event);
+			/* Some kind of vetoableCloseException should being created. If any view
+			 * throws an exception like that closing process should be aborted otherwise
+			 * the application finishes even if there's other type of exceptions.*/
+		}
+	 /* Finally we close all children views */
+		Collection<ViewContainer> views = this.getViewManager().getViews().values();
+	 /* Except the root view */
 		ViewContainerFrame viewContainerFrame = this.getViewManager().getRootView();
+	 /* Closing all children views */
+		for (ViewContainer view:views){
+			if (view != viewContainerFrame)
+				try {
+					/* This should be view.viewSave(); or persist just the view collection from the
+					 * application. Next time application starts the collection will be retrieved
+					 * again and the collections could be added to the application. */
+					view.viewClose();
+				} catch (ViewException e) {
+					throw new RuntimeException(e);
+				}
+		}		
+	 /* And finally we close the root view */
 		viewContainerFrame.getFrame().dispose();
 		}
 	/* (non-Javadoc)
@@ -152,6 +182,7 @@ public abstract class AbstractApplication implements Application
 				} else {
 					logger.info("=========================");
 					this.getViewManager().addView(w.getView(),w.getConstraint());
+				
 				}
 			} catch (ViewException e) {
 				logger.error("ssss=============");
@@ -251,5 +282,56 @@ public abstract class AbstractApplication implements Application
 		}
 		this.applicationContext = applicationContext;
 	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.core.ApplicationListenerAware#addApplicationListener(org.viewaframework.core.ApplicationListener)
+	 */
+	public void addApplicationListener(ApplicationListener listener) {
+		this.applicationListeners.add(listener);
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.core.ApplicationListenerAware#fireinitUI(org.viewaframework.core.ApplicationEvent)
+	 */
+	public void fireinitUI(ApplicationEvent event) {
+		for (ApplicationListener l : this.applicationListeners){
+			l.onInitUI(event);
+		}
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.core.ApplicationListenerAware#firePrepare(org.viewaframework.core.ApplicationEvent)
+	 */
+	public void firePrepare(ApplicationEvent event) {
+		for (ApplicationListener l : this.applicationListeners){
+			l.onPrepare(event);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.viewaframework.core.ApplicationListenerAware#firePrepareUI(org.viewaframework.core.ApplicationEvent)
+	 */
+	public void firePrepareUI(ApplicationEvent event) {
+		for (ApplicationListener l : this.applicationListeners){
+			l.onPrepareUI(event);
+		}
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.core.ApplicationListenerAware#getApplicationListeners()
+	 */
+	public List<ApplicationListener> getApplicationListeners() {
+		return applicationListeners;
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.core.ApplicationListenerAware#removeApplicationListener(org.viewaframework.core.ApplicationListener)
+	 */
+	public void removeApplicationListener(ApplicationListener listener) {
+		this.applicationListeners.remove(listener);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.viewaframework.core.ApplicationListenerAware#setApplicationListeners(java.util.List)
+	 */
+	public void setApplicationListeners(List<ApplicationListener> applicationListeners) {
+		this.applicationListeners = applicationListeners;
+	}
+
 
 }

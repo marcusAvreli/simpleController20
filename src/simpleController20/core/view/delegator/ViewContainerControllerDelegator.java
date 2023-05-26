@@ -133,7 +133,13 @@ public class ViewContainerControllerDelegator implements Delegator {
 		Map<String, List<ViewController<? extends EventListener, ? extends EventObject>>>  controllerMap = view.getViewControllerMap();	
 		
 			
-			
+		debugJustInCase("inject_called");
+		debugJustInCase("inject_view_id:"+view.getId());
+		if(null != controllerMap) {
+			logger.info("inject_called_controllerMap_is_not_null:"+controllerMap);
+		}else {
+			logger.info("inject_called_controllerMap_is_null");
+		}
 				
 		try {
 			if (view.getId().equalsIgnoreCase(ViewManager.ROOT_VIEW_ID)){
@@ -144,7 +150,7 @@ public class ViewContainerControllerDelegator implements Delegator {
 			
 				injectListeners(view,view.getRootPane(),controllerMap,ADD_LISTENER_PREFIX);
 			}else {
-				debugJustInCase("Injecting proxy listeners from view: "+view.getId());
+				logger.info("Injecting proxy listeners from view: "+view.getId());
 				injectListeners(view,view.getRootPane(),controllerMap,ADD_LISTENER_PREFIX);
 			}
 		} catch (Exception e) {			
@@ -187,8 +193,8 @@ public class ViewContainerControllerDelegator implements Delegator {
 			String controllerKey = it.next();
 			String workingKey = controllerKey.replace(viewId + POINT , EMPTY);
 			if(viewId.equals("SwingBuilderViewId")) {
-				debugJustInCase("inject_listeners_workingKey: "+workingKey);
-				debugJustInCase("inject_listeners_componentName: "+componentName);
+				//debugJustInCase("inject_listeners_workingKey: "+workingKey);
+				//debugJustInCase("inject_listeners_componentName: "+componentName);
 			}
 			if (componentName!= null && componentName.matches(workingKey.replace(ASTERISK,POINT_ASTERISK))){
 				vcl = viewControllers.get(controllerKey);

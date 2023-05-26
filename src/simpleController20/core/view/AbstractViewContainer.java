@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.EventObject;
 
@@ -30,6 +31,8 @@ import simpleController20.api.view.event.ViewContainerEvent;
 import simpleController20.api.view.event.ViewContainerEventController;
 import simpleController20.core.view.delegator.NamedComponentsDelegator;
 import simpleController20.core.view.delegator.ViewContainerControllerDelegator;
+import simpleController20.core.view.event.DefaultViewContainerEventController;
+
 
 /**
  * This is a default abstract implementation of a ViewContainer. The lifecycle
@@ -93,20 +96,25 @@ public abstract class AbstractViewContainer implements ViewContainer {
 	public AbstractViewContainer() {
 		super();
 		this.getContentPane().setLayout(new BorderLayout());
+		debugJustInCase("constructor_called_0");
 		this.viewContainerEventControllers = new ArrayList<ViewContainerEventController>();
+		
 
 	}
 	private void debugJustInCase(String message) {
-		if (logger.isInfoEnabled()) {
-			logger.info(message);
+		if (logger.isDebugEnabled()) {
+			logger.debug(message);
 		}
 	}
 	/**
 	 * @param id
 	 */
 	public AbstractViewContainer(String id) {
+		
 		this();
+		debugJustInCase("constructor_called_1");
 		this.setId(id);
+		
 	}
 
 	public void setLayeredPane(JLayeredPane layeredPane) {
@@ -257,11 +265,18 @@ public abstract class AbstractViewContainer implements ViewContainer {
 		
 		//TODO refactor
 		if (this.getContentPane()!=null) this.getContentPane().setName("contentPane");
-	
+		this.fireViewInit(new ViewContainerEvent(this));
 		final ViewContainer thisContainer = this; 
 		if (SwingUtilities.isEventDispatchThread()){
 			for (Delegator delegator : this.getDelegators()){
 				debugJustInCase("injecting_1");
+				if(null != thisContainer) {
+					debugJustInCase("injecting_container");
+					debugJustInCase("injecting_container"+thisContainer.getId());
+					debugJustInCase("injecting_container"+thisContainer.getViewControllerMap());
+				}else {
+					debugJustInCase("injecting_container_but_it_is_null");
+				}
 				delegator.inject(thisContainer);
 			}
 			
@@ -282,6 +297,45 @@ public abstract class AbstractViewContainer implements ViewContainer {
 		}
 		
 		//new Thread(viewActionsThread).start();
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.viewaframework.view.ViewContainer#viewClose()
+	 */
+	public void viewClose() throws ViewException {
+		
+		debugJustInCase("Closing view "+this.getClass().getName());
+		
+		this.fireViewClose(new ViewContainerEvent(this));
+		final ViewContainer thisContainer = this; 
+		final List<Delegator> reverseDelegation = new ArrayList<Delegator>(getDelegators());
+	 /* Delegators executed on reverse */
+		Collections.reverse(reverseDelegation);
+		if (SwingUtilities.isEventDispatchThread()){
+			viewCloseDelegatorCleaning(thisContainer, reverseDelegation);
+		} else {
+			SwingUtilities.invokeLater(new Runnable(){
+				public void run(){
+					try {						
+						viewCloseDelegatorCleaning(thisContainer,reverseDelegation);
+					} catch (ViewException e) {
+						e.printStackTrace();
+					}					
+				}
+			});
+		}	
+	}
+	/**
+	 * @param thisContainer
+	 * @param reverseDelegation
+	 * @throws ViewException
+	 */
+	private void viewCloseDelegatorCleaning(final ViewContainer thisContainer,
+			final List<Delegator> reverseDelegation) throws ViewException {
+		for (Delegator delegator: reverseDelegation){
+			delegator.clean(thisContainer);
+		}
+		thisContainer.setNamedComponents(null);
 	}
 	/* (non-Javadoc)
 	 * @see org.viewaframework.controller.ViewControllerAware#getViewControllerMap()
@@ -342,4 +396,48 @@ public abstract class AbstractViewContainer implements ViewContainer {
 	public List<ViewContainerEventController> getViewContainerListeners() {
 		return this.viewContainerEventControllers;
 	}	
+	/* (non-Javadoc)
+	 * @see org.viewaframework.view.ViewContainerEventAware#fireViewClose(org.viewaframework.view.ViewContainerEvent)
+	 */
+	public void fireViewClose(ViewContainerEvent event) {
+		for (ViewContainerEventController listener: this.viewContainerEventControllers){
+			listener.onViewClose(event);
+		}
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.view.ViewContainerEventAware#fireViewInit(org.viewaframework.view.ViewContainerEvent)
+	 */
+	public void fireViewInit(ViewContainerEvent event) {
+		debugJustInCase("fire_view_init_called");
+		debugJustInCase("size:"+viewContainerEventControllers.size());
+		for (ViewContainerEventController listener: this.viewContainerEventControllers){
+			debugJustInCase("checkPost_1");
+			listener.onViewInit(event);
+		}
+		debugJustInCase("fire_view_init_finished");
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.view.ViewContainerEventAware#fireViewInitUIState(org.viewaframework.view.ViewContainerEvent)
+	 */
+	public void fireViewInitUIState(ViewContainerEvent event) {
+		for (ViewContainerEventController listener: this.viewContainerEventControllers){
+			listener.onViewInitUIState(event);
+		}
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.view.ViewContainerEventAware#fireViewInitBackActions(org.viewaframework.view.ViewContainerEvent)
+	 */
+	public void fireViewInitBackActions(ViewContainerEvent event) {
+		for (ViewContainerEventController listener: this.viewContainerEventControllers){
+			listener.onViewInitBackActions(event);
+		}
+	}
+	/* (non-Javadoc)
+	 * @see org.viewaframework.view.ViewContainerEventAware#fireViewFinalUIState(org.viewaframework.view.ViewContainerEvent)
+	 */
+	public void fireViewFinalUIState(ViewContainerEvent event) {
+		for (ViewContainerEventController listener: this.viewContainerEventControllers){
+			listener.onViewFinalUIState(event);
+		}
+	}
 }

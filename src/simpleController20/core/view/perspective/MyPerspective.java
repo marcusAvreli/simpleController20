@@ -135,8 +135,8 @@ public class MyPerspective implements Perspective {
 		this.rightToLeft.setOneTouchExpandable(true);
 	}
 	private void debugJustInCase(String message) {
-		if(logger.isInfoEnabled()) {
-		logger.info(message);
+		if(logger.isDebugEnabled()) {
+		logger.debug(message);
 		}
 		}
 	public void removeView(ViewContainer view) {

@@ -14,7 +14,8 @@ import simpleController20.swing.swing.builder.layout.GridBagConstraintsBuilder;
 
 //https://github.com/mariogarcia/viewa/blob/c39f7f46dc39908bd23cd4ded0b60c5f555617b8/widget/src/test/java/org/viewaframework/widget/swing/builder/util/SwingBuilderView.java
 @Controllers({
-	@Controller(type=TestController.class,pattern="start2Button"),
+	@Controller(type=TestController.class,pattern="certification"),
+	@Controller(type=TestController.class,pattern="customApplicationBtn"),
 	
 })
 public class SwingBuilderView extends DefaultViewContainer{
@@ -28,10 +29,10 @@ public class SwingBuilderView extends DefaultViewContainer{
 							setName("fromLabel").setText("From").swingBuilder().
 						button(new GridBagConstraintsBuilder().
 									row(6).col(0).gridWidth(3).anchor(GridBagConstraints.EAST).fill(GridBagConstraints.NONE).insets(20,0,0,0).build()).
-								setName("start1Button").setText("Start1").setPreferredSize(new Dimension(180,25)).swingBuilder().
+								setName("customApplicationBtn").setText("Custom Application").setPreferredSize(new Dimension(180,25)).swingBuilder().
 								button(new GridBagConstraintsBuilder().
 										row(7).col(0).gridWidth(3).anchor(GridBagConstraints.EAST).fill(GridBagConstraints.NONE).insets(20,0,0,0).build()).
-									setName("start2Button").setText("Start2").setPreferredSize(new Dimension(180,25)).swingBuilder().
+									setName("certification").setText("Certification").setPreferredSize(new Dimension(180,25)).swingBuilder().
 						getTarget()
 							,JPanel.class,BorderLayout.NORTH).
 						swingBuilder().setPreferredSize(new Dimension(400,0)).getTarget());

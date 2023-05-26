@@ -8,12 +8,13 @@ import javax.swing.RootPaneContainer;
 
 import simpleController20.api.controller.ViewControllerAware;
 import simpleController20.api.core.ApplicationAware;
+import simpleController20.api.view.event.ViewContainerEventAware;
 import simpleController20.api.view.event.ViewContainerEventControllerAware;
 
 
 
 //https://github.com/mariogarcia/viewa/blob/c39f7f46dc39908bd23cd4ded0b60c5f555617b8/api/src/main/java/org/viewaframework/view/ViewContainer.java
-public interface ViewContainer  extends  RootPaneContainer,ApplicationAware,ViewControllerAware,ComponentsAware,ViewContainerEventControllerAware
+public interface ViewContainer  extends  RootPaneContainer,ApplicationAware,ViewContainerEventAware,ViewControllerAware,ComponentsAware,ViewContainerEventControllerAware
 {
 	public static final String CONTENTPANE 	= "contentPane";
 	public static final String FRAME		= "frame";
@@ -73,5 +74,6 @@ public interface ViewContainer  extends  RootPaneContainer,ApplicationAware,View
 	public abstract void setTitle(String title);
 
 	public abstract void viewInit() throws ViewException;
+	public abstract void viewClose() throws ViewException;
 
 }

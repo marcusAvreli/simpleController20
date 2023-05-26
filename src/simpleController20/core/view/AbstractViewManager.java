@@ -18,6 +18,7 @@ import simpleController20.api.view.ViewManager;
 import simpleController20.api.view.perspective.PerspectiveConstraint;
 import simpleController20.core.annotation.processor.ControllersProcessor;
 import simpleController20.core.annotation.processor.ListenersProcessor;
+import simpleController20.core.view.event.DefaultViewContainerEventController;
 
 
 
@@ -63,12 +64,16 @@ public abstract class AbstractViewManager implements ViewManager
 	 /* Then application instance is injected in the view */
 		view.setApplication(app);
 		debugJustInCase("add_view:"+view.getId());
+		debugJustInCase("add_view:"+viewContainer);
 		
 		if (viewId!=null && viewContainer == null)
 		{
 			//model 		= modelManager.getViewModelMap(viewId);
 			//viewModel	= view.getViewModelMap();
 			controllers = controllerDispatcher.getViewControllers(view);
+			if(view.getId().equals("CustomApplicationView")) {
+				debugJustInCase("new_controllers:"+controllers);
+			}
 			 /* Then application instance is injected in the view */
 			view.setApplication(app);
 		 /* The view is added to the application holder */
@@ -87,10 +92,20 @@ public abstract class AbstractViewManager implements ViewManager
 			}
 			debugJustInCase("before_processing_controllers");
 			try {
+				if(view.getId().equals("CustomApplicationView")) {
+					debugJustInCase("calling_controller_processor");
+				}
 				view.getViewControllerMap().putAll(
 						new ControllersProcessor(
 								view,
 								view.getApplication().getApplicationContext()).process());
+				if(view.getId().equals("CustomApplicationView")) {
+					if(null != view.getViewControllerMap()) {
+						debugJustInCase("controllerMap:"+view.getViewControllerMap());
+					}else {
+						debugJustInCase("controllerMap_is_null:"+view.getViewControllerMap());
+					}
+				}
 				view.setViewContainerListeners(
 						new ListenersProcessor(view).getResult()
 					);
@@ -105,11 +120,17 @@ public abstract class AbstractViewManager implements ViewManager
 		
 		if (!view.getId().equals(ViewManager.ROOT_VIEW_ID)){
 			this.getPerspective().addView(view,constraint);
+			view.addViewContainerListener(new DefaultViewContainerEventController());
 		}
 		else {
 			//this.getPerspective().addView(view,constraint);
 		}
 		try {
+			if(view.getId().equals("TableViewId2")) {
+				if(null != view.getViewControllerMap()) {
+					debugJustInCase("before_init_view_controllerMap:"+view.getViewControllerMap());
+				}
+			}
 			view.viewInit();
 		} catch (ViewException e) {
 			// TODO Auto-generated catch block

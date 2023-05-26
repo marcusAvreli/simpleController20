@@ -16,6 +16,7 @@ import simpleController20.api.controller.BackgroundException;
 import simpleController20.api.view.ViewContainer;
 import simpleController20.api.view.ViewException;
 import simpleController20.api.view.event.ViewContainerEventController;
+import simpleController20.api.view.perspective.PerspectiveConstraint;
 import simpleController20.core.controller.AbstractViewController;
 
 /**
@@ -44,14 +45,17 @@ public class TestController extends AbstractViewController<ActionListener, Actio
 	}
 	public void handleView(ViewContainer view, ActionEvent eventObject) throws BackgroundException{
 		debugJustInCase("handleView_called");
-		Map<String,List<Component>> map = view.getNamedComponents();
+	/*	Map<String,List<Component>> map = view.getNamedComponents();
 		debugJustInCase("handleView_called"+map);
 		Map<Object,ViewContainer> viewMap = view.getApplication().getViewManager().getViews();
 		debugJustInCase("view_container_map:"+viewMap);
-		ViewContainer viewContainer = viewMap.get("TableViewId");
-		Map<String,List<Component>> map2 = viewContainer.getNamedComponents();
-		JLabel field = ComponentFinder.find(JLabel.class).in(viewContainer).named("toLabel");
-		field.setText("hello");
+		*/
+		//ViewContainer viewContainer = viewMap.get("TableViewId");
+		//Map<String,List<Component>> map2 = viewContainer.getNamedComponents();
+	//	JLabel field = ComponentFinder.find(JLabel.class).in(viewContainer).named("toLabel");
+		//field.setText("hello");
+	
+		//view.getApplication().getViewManager().getPerspective().removeView(viewContainer);
 		
 	}
 	/*
@@ -62,6 +66,7 @@ public class TestController extends AbstractViewController<ActionListener, Actio
 	 */
 	@Override
 	public void postHandlingView(ViewContainer view, ActionEvent eventObject) throws ViewException {
+		debugJustInCase("processing_view:"+view.getId());
 		String actionCommand = eventObject.getActionCommand();
 		List<ViewContainerEventController> listeners = view.getViewContainerListeners();
 		if (null != listeners && !listeners.isEmpty()) {
@@ -72,14 +77,48 @@ public class TestController extends AbstractViewController<ActionListener, Actio
 			debugJustInCase("listeners_is_empty");
 		}
 
-		debugJustInCase(actionCommand);
-		Object object = eventObject.getSource();
+		debugJustInCase("action_command:"+actionCommand);
+		/*Object object = eventObject.getSource();
 		if (null != object) {
 			debugJustInCase("post_handling_view:" + object.getClass().getSimpleName());
 		}
 		debugJustInCase("post_handling_view:" + view.getNamedComponents());
+		*/
 		// JTextField field =
 		// ComponentFinder.find(JTextField.class).in(view).named("text");
 		// field.setText("Hey it worked");
+		Map<Object,ViewContainer> views = view.getApplication().getViewManager().getViews();
+		debugJustInCase("map_of_views:"+views.keySet());
+		if(actionCommand.equals("Certification")) {
+			ViewContainer tabContainer = new CertificationView(); 
+			try {
+		
+				ViewContainer viewToRemove = views.get("CustomApplicationView");
+				
+				view.getApplication().getViewManager().getPerspective().removeView(viewToRemove);
+				view.getApplication().getViewManager().addView(tabContainer, PerspectiveConstraint.RIGHT);
+				views.remove("CustomApplicationView");
+			} catch (ViewException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		if(actionCommand.equals("Custom Application")) {
+			ViewContainer customApp = new CustomApplicationView(); 
+			try {
+				
+				ViewContainer viewToRemove = views.get("CertificationView");
+				if(null != viewToRemove) {
+					
+					view.getApplication().getViewManager().getPerspective().removeView(viewToRemove);
+					debugJustInCase("certification view removed");
+					view.getApplication().getViewManager().addView(customApp, PerspectiveConstraint.RIGHT);
+					views.remove("CertificationView");
+				}
+			} catch (ViewException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 }
